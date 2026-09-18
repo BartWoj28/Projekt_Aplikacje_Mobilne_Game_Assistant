@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">GamesAssistant</string>
+    <string name="dice_title">Dice</string>
+    <string name="minus">-</string>
+    <string name="plus">+</string>
+    <string name="default_dice_count">1</string>
+    <string-array name="dice_types">
+        <item>d6</item>
+        <item>d4</item>
+        <item>d10</item>
+        <item>d20</item>
+    </string-array>
+    <string name="chess_timer_title">Chess Timer</string>
+</resources>

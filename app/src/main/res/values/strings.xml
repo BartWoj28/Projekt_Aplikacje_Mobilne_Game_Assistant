@@ -11,4 +11,9 @@
         <item>d20</item>
     </string-array>
     <string name="chess_timer_title">Chess Timer</string>
+    <string name="timer_title">Timer</string>
+    <string-array name="timer_modes">
+        <item>Hourglass</item>
+        <item>7-Segment</item>
+    </string-array>
 </resources>

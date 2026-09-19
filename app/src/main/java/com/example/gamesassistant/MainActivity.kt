@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.gamesassistant.mechanics.ChessClockFragment
-import com.example.gamesassistant.mechanics.DiceFragment
+import com.example.gamesassistant.mechanics.TimerFragment
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.fragment_container, ChessClockFragment())
+                .replace(R.id.fragment_container, TimerFragment())
                 .commit()
         }
     }

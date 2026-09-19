@@ -12,6 +12,10 @@
     </string-array>
     <string name="chess_timer_title">Chess Timer</string>
     <string name="timer_title">Timer</string>
+    <string name="queue_title">Queue</string>
+    <string name="add_player_hint">Player Name</string>
+    <string name="players_list_title">Players</string>
+    <string name="round_number">Round %d</string>
     <string-array name="timer_modes">
         <item>Hourglass</item>
         <item>7-Segment</item>

@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GamesAssistant"
+rootProject.name = "ProjektMobilki"
 include(":app")

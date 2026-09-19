@@ -19,6 +19,7 @@ import com.example.projektmobilki.ui.viewmodels.RandomizerViewModel
 fun RandomizerScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    showHeader: Boolean = true,
     viewModel: RandomizerViewModel = viewModel()
 ) {
     val diceResults by viewModel.diceResults.collectAsState()
@@ -33,79 +34,122 @@ fun RandomizerScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Randomizer") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+    if (showHeader) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Randomizer") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                        }
                     }
-                }
+                )
+            },
+            floatingActionButton = {
+                RandomizerFAB(activeTab, viewModel)
+            }
+        ) { padding ->
+            RandomizerContent(
+                modifier = modifier.padding(padding),
+                activeTab = activeTab,
+                viewModel = viewModel,
+                diceResults = diceResults,
+                isRolling = isRolling,
+                isHeads = isHeads
             )
-        },
-        floatingActionButton = {
-            LargeFloatingActionButton(
-                onClick = { viewModel.triggerAction() },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+        }
+    } else {
+        Box(modifier = modifier.fillMaxSize()) {
+            RandomizerContent(
+                modifier = Modifier.fillMaxSize(),
+                activeTab = activeTab,
+                viewModel = viewModel,
+                diceResults = diceResults,
+                isRolling = isRolling,
+                isHeads = isHeads
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = if (activeTab == 0) "Roll Dice" else "Flip Coin",
-                    modifier = Modifier.size(36.dp)
-                )
+                RandomizerFAB(activeTab, viewModel)
             }
         }
-    ) { padding ->
-        Column(
-            modifier = modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
-            TabRow(selectedTabIndex = activeTab) {
-                Tab(
-                    selected = activeTab == 0,
-                    onClick = { viewModel.setActiveTab(0) },
-                    text = { Text("Dice") },
-                    icon = { Icon(Icons.Rounded.Casino, contentDescription = null) }
-                )
-                Tab(
-                    selected = activeTab == 1,
-                    onClick = { viewModel.setActiveTab(1) },
-                    text = { Text("Coin") },
-                    icon = { Icon(Icons.Rounded.MonetizationOn, contentDescription = null) }
-                )
-            }
+    }
+}
 
-            Box(modifier = Modifier.weight(1f)) {
-                if (activeTab == 0) {
-                    DiceContent(results = diceResults, isRolling = isRolling)
-                } else {
-                    CoinContent(isHeads = isHeads, isRolling = isRolling)
-                }
-            }
+@Composable
+private fun RandomizerFAB(activeTab: Int, viewModel: RandomizerViewModel) {
+    LargeFloatingActionButton(
+        onClick = { viewModel.triggerAction() },
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Refresh,
+            contentDescription = if (activeTab == 0) "Roll Dice" else "Flip Coin",
+            modifier = Modifier.size(36.dp)
+        )
+    }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RandomizerContent(
+    activeTab: Int,
+    viewModel: RandomizerViewModel,
+    diceResults: List<Int>,
+    isRolling: Boolean,
+    isHeads: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        TabRow(selectedTabIndex = activeTab) {
+            Tab(
+                selected = activeTab == 0,
+                onClick = { viewModel.setActiveTab(0) },
+                text = { Text("Dice") },
+                icon = { Icon(Icons.Rounded.Casino, contentDescription = null) }
+            )
+            Tab(
+                selected = activeTab == 1,
+                onClick = { viewModel.setActiveTab(1) },
+                text = { Text("Coin") },
+                icon = { Icon(Icons.Rounded.MonetizationOn, contentDescription = null) }
+            )
+        }
+
+        Box(modifier = Modifier.weight(1f)) {
             if (activeTab == 0) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Number of Dice:")
-                    (1..3).forEach { count ->
-                        FilterChip(
-                            selected = diceResults.size == count,
-                            onClick = { viewModel.setDiceCount(count) },
-                            label = { Text(count.toString()) }
-                        )
-                    }
+                DiceContent(results = diceResults, isRolling = isRolling)
+            } else {
+                CoinContent(isHeads = isHeads, isRolling = isRolling)
+            }
+        }
+
+        if (activeTab == 0 && !isRolling) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Number of Dice:")
+                (1..3).forEach { count ->
+                    FilterChip(
+                        selected = diceResults.size == count,
+                        onClick = { viewModel.setDiceCount(count) },
+                        label = { Text(count.toString()) }
+                    )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
         }
+        
+        Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
     }
 }

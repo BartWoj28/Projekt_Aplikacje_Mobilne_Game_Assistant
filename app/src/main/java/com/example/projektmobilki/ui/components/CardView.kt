@@ -25,9 +25,7 @@ fun CardView(
     val contentColor = if (card.suit.isRed) Color.Red else Color.Black
 
     ElevatedCard(
-        modifier = modifier
-            .width(160.dp)
-            .height(240.dp),
+        modifier = modifier,
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = Color.White,

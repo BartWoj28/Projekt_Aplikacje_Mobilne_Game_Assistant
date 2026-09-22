@@ -19,6 +19,7 @@ import com.example.projektmobilki.ui.theme.ProjektMobilkiTheme
 @Composable
 fun MainMenuScreen(
     onStartGame: () -> Unit,
+    hasActiveGame: Boolean,
     onOpenSettings: () -> Unit,
     onOpenRandomizer: () -> Unit,
     onOpenVirtualDeck: () -> Unit,
@@ -33,7 +34,7 @@ fun MainMenuScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Mobilny Asystent Gry Karcianej",
+            text = "Game Assistant",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -52,7 +53,7 @@ fun MainMenuScreen(
             ) {
                 Icon(Icons.Rounded.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Start Game")
+                Text(if (hasActiveGame) "Continue" else "Start Game")
             }
         }
         
@@ -108,6 +109,7 @@ fun MainMenuScreenPreview() {
     ProjektMobilkiTheme {
         MainMenuScreen(
             onStartGame = {},
+            hasActiveGame = false,
             onOpenSettings = {},
             onOpenRandomizer = {},
             onOpenVirtualDeck = {},

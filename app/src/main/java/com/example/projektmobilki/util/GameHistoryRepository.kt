@@ -30,6 +30,12 @@ class GameHistoryRepository(context: Context) {
         prefs.edit().putString("history_list", json.encodeToString(updatedList)).apply()
     }
 
+    fun deleteGame(entryId: String) {
+        val updatedList = _history.value.filter { it.id != entryId }
+        _history.value = updatedList
+        prefs.edit().putString("history_list", json.encodeToString(updatedList)).apply()
+    }
+
     fun clearHistory() {
         _history.value = emptyList()
         prefs.edit().remove("history_list").apply()

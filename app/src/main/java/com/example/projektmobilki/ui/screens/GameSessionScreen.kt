@@ -10,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.activity.ComponentActivity
+import android.content.ContextWrapper
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -32,11 +34,31 @@ import java.util.UUID
 fun GameSessionScreen(
     gameId: String,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: GameViewModel = viewModel()
+    modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val activity = remember(context) {
+        var ctx = context
+        while (ctx is ContextWrapper && ctx !is ComponentActivity) {
+            ctx = ctx.baseContext
+        }
+        ctx as? ComponentActivity
+    }
+    
+    val viewModel: GameViewModel = if (activity != null) {
+        viewModel(viewModelStoreOwner = activity)
+    } else {
+        viewModel()
+    }
+
     LaunchedEffect(gameId) {
         viewModel.initializeGame(gameId)
+    }
+
+    DisposableEffect(gameId) {
+        onDispose {
+            viewModel.pauseTimer()
+        }
     }
 
     val gameState by viewModel.gameState.collectAsState()
@@ -61,8 +83,6 @@ fun GameSessionScreen(
     // Keep screen on during the game session
     KeepScreenOn()
 
-    val context = LocalContext.current
-
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         topBar = {
@@ -70,7 +90,7 @@ fun GameSessionScreen(
                 TopAppBar(
                     title = { 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Game: $gameId", modifier = Modifier.weight(1f))
+                            Text("Game Session", modifier = Modifier.weight(1f))
                             // Display compact timer in the TopAppBar so it's always visible during tool usage
                             if (timerType == TimerType.CHESS_CLOCK) {
                                 Text(
@@ -125,6 +145,7 @@ fun GameSessionScreen(
                                     val playerNames = gameState.players.map { it.name }
                                     SettingsRepository.getInstance(context).saveLastPlayers(playerNames)
                                 }
+                                viewModel.endCurrentGame()
                                 onBack()
                             }
                         ) {
@@ -238,6 +259,7 @@ fun GameSessionScreen(
                 currentPlayerIndex = gameState.currentPlayerIndex,
                 onAddPlayer = { viewModel.addPlayer(it) },
                 onRemovePlayer = { viewModel.removePlayer(it) },
+                onClearAllPlayers = { viewModel.clearPlayers() },
                 onShuffle = { viewModel.shufflePlayers() },
                 onNextTurn = { viewModel.nextTurn() },
                 onUpdateScore = { id, delta -> viewModel.updateScore(id, delta) },

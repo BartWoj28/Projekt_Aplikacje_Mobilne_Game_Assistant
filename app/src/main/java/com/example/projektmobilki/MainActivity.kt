@@ -13,10 +13,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import com.example.projektmobilki.navigation.GameHistory
 import com.example.projektmobilki.navigation.GameSession
 import com.example.projektmobilki.navigation.MainMenu
@@ -30,6 +33,7 @@ import com.example.projektmobilki.ui.screens.MainMenuScreen
 import com.example.projektmobilki.ui.screens.RandomizerScreen
 import com.example.projektmobilki.ui.screens.SettingsScreen
 import com.example.projektmobilki.ui.theme.ProjektMobilkiTheme
+import com.example.projektmobilki.ui.viewmodels.GameViewModel
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -56,6 +60,9 @@ fun AppContent() {
     }
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = directive)
 
+    val gameViewModel: GameViewModel = viewModel()
+    val hasActiveGame by gameViewModel.hasActiveGame.collectAsState()
+
     NavDisplay(
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
@@ -66,8 +73,9 @@ fun AppContent() {
             ) {
                 MainMenuScreen(
                     onStartGame = dropUnlessResumed {
-                        backStack.add(GameSession("Game-${System.currentTimeMillis()}"))
+                        backStack.add(GameSession("ActiveSession"))
                     },
+                    hasActiveGame = hasActiveGame,
                     onOpenSettings = dropUnlessResumed {
                         backStack.add(Settings)
                     },

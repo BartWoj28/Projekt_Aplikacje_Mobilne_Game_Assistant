@@ -169,12 +169,14 @@ fun PlayerQueueComponent(
     currentPlayerIndex: Int,
     onAddPlayer: (String) -> Unit,
     onRemovePlayer: (String) -> Unit,
+    onClearAllPlayers: () -> Unit,
     onShuffle: () -> Unit,
     onNextTurn: () -> Unit,
     onUpdateScore: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var showClearDialog by remember { mutableStateOf(false) }
     var newPlayerName by remember { mutableStateOf("") }
 
     Column(modifier = modifier) {
@@ -186,6 +188,7 @@ fun PlayerQueueComponent(
             Text("Players Queue", style = MaterialTheme.typography.titleLarge)
             Row {
                 IconButton(onClick = onShuffle) { Icon(Icons.Default.Shuffle, contentDescription = "Shuffle") }
+                IconButton(onClick = { showClearDialog = true }) { Icon(Icons.Default.DeleteSweep, contentDescription = "Clear All") }
                 IconButton(onClick = { showAddDialog = true }) { Icon(Icons.Default.Add, contentDescription = "Add") }
             }
         }
@@ -240,6 +243,26 @@ fun PlayerQueueComponent(
             }
         )
     }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Clear All Players") },
+            text = { Text("Are you sure you want to remove all players from the list? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onClearAllPlayers()
+                        showClearDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 @Composable
@@ -249,6 +272,8 @@ fun PlayerItem(
     onRemove: () -> Unit,
     onUpdateScore: (Int) -> Unit
 ) {
+    var showRemoveDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -273,8 +298,28 @@ fun PlayerItem(
                 IconButton(onClick = { onUpdateScore(-1) }) { Icon(Icons.Default.Remove, contentDescription = "Decrease Score") }
                 IconButton(onClick = { onUpdateScore(1) }) { Icon(Icons.Default.Add, contentDescription = "Increase Score") }
                 Spacer(Modifier.width(8.dp))
-                IconButton(onClick = onRemove) { Icon(Icons.Default.Delete, contentDescription = "Remove Player") }
+                IconButton(onClick = { showRemoveDialog = true }) { Icon(Icons.Default.Delete, contentDescription = "Remove Player") }
             }
         }
+    }
+
+    if (showRemoveDialog) {
+        AlertDialog(
+            onDismissRequest = { showRemoveDialog = false },
+            title = { Text("Remove Player") },
+            text = { Text("Are you sure you want to remove ${player.name} from the current game?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onRemove()
+                        showRemoveDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Remove") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 }

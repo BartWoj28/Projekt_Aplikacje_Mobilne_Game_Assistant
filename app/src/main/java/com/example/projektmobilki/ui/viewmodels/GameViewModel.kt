@@ -46,6 +46,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _activeChessPlayer = MutableStateFlow(1)
     val activeChessPlayer: StateFlow<Int> = _activeChessPlayer.asStateFlow()
 
+    private val _hasActiveGame = MutableStateFlow(false)
+    val hasActiveGame: StateFlow<Boolean> = _hasActiveGame.asStateFlow()
+
     private var isVibrationAlertTriggered = false
     private var gameStartTime: Long = 0L
     private var currentGameId: String? = null
@@ -57,12 +60,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         loadLastPlayers()
     }
 
+    private fun checkActiveGameState() {
+        val hasScore = _gameState.value.players.any { it.score != 0 }
+        val timerStarted = gameStartTime > 0L
+        _hasActiveGame.value = hasScore || timerStarted
+    }
+
     fun initializeGame(gameId: String) {
         if (currentGameId != gameId) {
             currentGameId = gameId
+            gameStartTime = 0L
             loadLastPlayers()
             resetTimer()
         }
+        checkActiveGameState()
+    }
+
+    fun endCurrentGame() {
+        currentGameId = null
+        gameStartTime = 0L
+        checkActiveGameState()
     }
 
     private fun loadLastPlayers() {
@@ -104,6 +121,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         playerToRemove?.let { ttsHelper.speak("Removed ${it.name}") }
     }
 
+    fun clearPlayers() {
+        _gameState.value = _gameState.value.copy(
+            players = emptyList(),
+            currentPlayerIndex = 0
+        )
+        saveLastPlayers()
+        ttsHelper.speak("Cleared all players")
+    }
+
     fun shufflePlayers() {
         _gameState.value = _gameState.value.copy(
             players = _gameState.value.players.shuffled(),
@@ -118,6 +144,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (it.id == playerId) it.copy(score = it.score + delta) else it
         }
         _gameState.value = _gameState.value.copy(players = updatedPlayers)
+        checkActiveGameState()
         
         val player = updatedPlayers.find { it.id == playerId }
         player?.let {
@@ -147,6 +174,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun startTimer() {
         if (gameStartTime == 0L) {
             gameStartTime = System.currentTimeMillis()
+            checkActiveGameState()
         }
         if (_isTimerRunning.value) return
         
@@ -249,6 +277,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         super.onCleared()
+        pauseTimer()
         ttsHelper.shutdown()
     }
 }

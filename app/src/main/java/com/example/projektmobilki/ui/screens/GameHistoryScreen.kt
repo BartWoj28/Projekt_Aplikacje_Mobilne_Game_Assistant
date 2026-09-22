@@ -10,6 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +34,8 @@ fun GameHistoryScreen(
     val context = LocalContext.current
     val repository = GameHistoryRepository.getInstance(context)
     val history by repository.history.collectAsState()
+    
+    var showClearDialog by remember { mutableStateOf(false) }
 
     // Calculate simple stats
     val totalGames = history.size
@@ -50,7 +55,7 @@ fun GameHistoryScreen(
                 },
                 actions = {
                     if (history.isNotEmpty()) {
-                        IconButton(onClick = { repository.clearHistory() }) {
+                        IconButton(onClick = { showClearDialog = true }) {
                             Icon(Icons.Rounded.Delete, contentDescription = "Clear History")
                         }
                     }
@@ -117,16 +122,44 @@ fun GameHistoryScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(history) { entry ->
-                        HistoryEntryRow(entry = entry)
+                        HistoryEntryRow(
+                            entry = entry,
+                            onDelete = { repository.deleteGame(entry.id) }
+                        )
                     }
                 }
             }
         }
     }
+    
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Clear Game History") },
+            text = { Text("Are you sure you want to delete all recorded game sessions? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        repository.clearHistory()
+                        showClearDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 @Composable
-fun HistoryEntryRow(entry: GameHistoryEntry) {
+fun HistoryEntryRow(
+    entry: GameHistoryEntry,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     val dateStr = dateFormat.format(Date(entry.dateMillis))
 
@@ -141,17 +174,27 @@ fun HistoryEntryRow(entry: GameHistoryEntry) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Winner: ${entry.winnerName}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = dateStr,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column {
+                    Text(
+                        text = "Winner: ${entry.winnerName}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = dateStr,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                IconButton(onClick = { showDeleteDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Delete,
+                        contentDescription = "Delete entry",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))
@@ -181,12 +224,41 @@ fun HistoryEntryRow(entry: GameHistoryEntry) {
             }
         }
     }
+    
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete History Entry") },
+            text = { Text("Are you sure you want to delete this game history entry?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun GameHistoryScreenPreview() {
     ProjektMobilkiTheme {
-        GameHistoryScreen(onBack = {})
+        HistoryEntryRow(
+            entry = GameHistoryEntry(
+                id = "1",
+                dateMillis = System.currentTimeMillis(),
+                playerResults = emptyList(),
+                winnerName = "Test",
+                durationSeconds = 120
+            ),
+            onDelete = {}
+        )
     }
 }

@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -172,7 +174,7 @@ fun ChessGameScreen(viewModel: ChessViewModel) {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        Column(modifier = Modifier.fillMaxSize().systemBarsPadding().padding(8.dp)) {
             // Black Player Info
             PlayerInfoRow(
                 name = state.playerBlack,
@@ -183,6 +185,22 @@ fun ChessGameScreen(viewModel: ChessViewModel) {
                 onResign = { resignConfirm = PieceColor.BLACK },
                 onDrawOffer = { viewModel.offerDraw(PieceColor.BLACK) }
             )
+        
+        Spacer(Modifier.height(16.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Button(onClick = { viewModel.togglePause() }) {
+                Icon(
+                    imageVector = if (state.isPaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
+                    contentDescription = null
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(if (state.isPaused) "Resume" else "Pause")
+            }
+        }
         
         Spacer(Modifier.height(16.dp))
         
@@ -207,6 +225,7 @@ fun ChessGameScreen(viewModel: ChessViewModel) {
                                     .fillMaxHeight()
                                     .background(squareColor)
                                     .clickable {
+                                        if (state.isPaused) return@clickable
                                         if (promotionMove != null) return@clickable
                                         val move = validMoves.find { it.to == pos }
                                         if (move != null) {
@@ -243,7 +262,16 @@ fun ChessGameScreen(viewModel: ChessViewModel) {
             }
             
             // Overlays
-            if (promotionMove != null) {
+            if (state.isPaused) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color.Black.copy(alpha = 0.5f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("PAUSED", color = Color.White, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+                }
+            } else if (promotionMove != null) {
                 PromotionDialog(
                     onPromote = { type ->
                         viewModel.makeMove(promotionMove!!.copy(promotion = type))

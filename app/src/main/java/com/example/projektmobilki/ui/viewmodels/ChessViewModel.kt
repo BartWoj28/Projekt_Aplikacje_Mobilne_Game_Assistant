@@ -17,7 +17,8 @@ data class ChessMatchState(
     val scoreBlack: Int = 0,
     val timeMinutes: Int = 10,
     val incrementSeconds: Int = 0,
-    val isGameActive: Boolean = false
+    val isGameActive: Boolean = false,
+    val isPaused: Boolean = false
 )
 
 class ChessViewModel : ViewModel() {
@@ -86,13 +87,13 @@ class ChessViewModel : ViewModel() {
         _blackTimeMs.value = startingMs
         
         _drawOffer.value = null
-        _matchState.value = _matchState.value.copy(isGameActive = true)
+        _matchState.value = _matchState.value.copy(isGameActive = true, isPaused = false)
         
         startTimer()
     }
 
     fun getLegalMoves(pos: Position): List<Move> {
-        if (!_matchState.value.isGameActive || _engine.value.isCheckmate || _engine.value.isStalemate) return emptyList()
+        if (!_matchState.value.isGameActive || _matchState.value.isPaused || _engine.value.isCheckmate || _engine.value.isStalemate) return emptyList()
         return _engine.value.getLegalMoves(pos)
     }
 
@@ -120,6 +121,17 @@ class ChessViewModel : ViewModel() {
         }
     }
 
+    fun togglePause() {
+        val current = _matchState.value
+        if (current.isPaused) {
+            _matchState.value = current.copy(isPaused = false)
+            startTimer()
+        } else {
+            _matchState.value = current.copy(isPaused = true)
+            stopTimer()
+        }
+    }
+
     private fun updateBoardState() {
         // Deep copy board to force UI refresh
         val newBoard = Array(8) { arrayOfNulls<Piece>(8) }
@@ -141,7 +153,7 @@ class ChessViewModel : ViewModel() {
                 val delta = now - lastTickTime
                 lastTickTime = now
 
-                if (!_engine.value.isCheckmate && !_engine.value.isStalemate && _matchState.value.isGameActive) {
+                if (!_engine.value.isCheckmate && !_engine.value.isStalemate && _matchState.value.isGameActive && !_matchState.value.isPaused) {
                     if (_engine.value.turn == PieceColor.WHITE) {
                         _whiteTimeMs.value = (_whiteTimeMs.value - delta).coerceAtLeast(0L)
                         if (_whiteTimeMs.value == 0L) handleTimeout(PieceColor.WHITE)

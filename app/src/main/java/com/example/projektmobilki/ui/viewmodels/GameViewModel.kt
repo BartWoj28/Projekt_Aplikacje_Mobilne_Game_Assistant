@@ -87,7 +87,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val players = lastPlayers.map { name ->
             Player(UUID.randomUUID().toString(), name, 0)
         }
-        _gameState.value = _gameState.value.copy(players = players, currentPlayerIndex = 0)
+        _gameState.value = _gameState.value.copy(players = players, currentPlayerIndex = 0, roundCount = 1)
     }
 
     private fun saveLastPlayers() {
@@ -124,7 +124,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun clearPlayers() {
         _gameState.value = _gameState.value.copy(
             players = emptyList(),
-            currentPlayerIndex = 0
+            currentPlayerIndex = 0,
+            roundCount = 1
         )
         saveLastPlayers()
         ttsHelper.speak("Cleared all players")
@@ -133,7 +134,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun shufflePlayers() {
         _gameState.value = _gameState.value.copy(
             players = _gameState.value.players.shuffled(),
-            currentPlayerIndex = 0
+            currentPlayerIndex = 0,
+            roundCount = 1
         )
         saveLastPlayers()
         ttsHelper.speak("Players shuffled")
@@ -156,10 +158,44 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (_gameState.value.players.isEmpty()) return
         
         val nextIndex = (_gameState.value.currentPlayerIndex + 1) % _gameState.value.players.size
-        _gameState.value = _gameState.value.copy(currentPlayerIndex = nextIndex)
+        val nextRound = if (nextIndex == 0) _gameState.value.roundCount + 1 else _gameState.value.roundCount
+        
+        _gameState.value = _gameState.value.copy(
+            currentPlayerIndex = nextIndex,
+            roundCount = nextRound
+        )
         
         val nextPlayer = _gameState.value.players[nextIndex]
         ttsHelper.speak("It's ${nextPlayer.name}'s turn")
+        
+        isVibrationAlertTriggered = false
+        resetTimer()
+        startTimer()
+    }
+
+    fun previousTurn() {
+        if (_gameState.value.players.isEmpty()) return
+        if (_gameState.value.roundCount == 1 && _gameState.value.currentPlayerIndex == 0) return
+        
+        val prevIndex = if (_gameState.value.currentPlayerIndex - 1 < 0) {
+            _gameState.value.players.size - 1
+        } else {
+            _gameState.value.currentPlayerIndex - 1
+        }
+        
+        val prevRound = if (prevIndex == _gameState.value.players.size - 1) {
+            maxOf(1, _gameState.value.roundCount - 1)
+        } else {
+            _gameState.value.roundCount
+        }
+        
+        _gameState.value = _gameState.value.copy(
+            currentPlayerIndex = prevIndex,
+            roundCount = prevRound
+        )
+        
+        val prevPlayer = _gameState.value.players[prevIndex]
+        ttsHelper.speak("It's ${prevPlayer.name}'s turn")
         
         isVibrationAlertTriggered = false
         resetTimer()
@@ -189,6 +225,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun runTurnTimer() {
+        if (_timerType.value == TimerType.TURN_UNLIMITED) {
+            _isTimerRunning.value = false
+            return
+        }
+        
         while (_timeRemaining.value > 0 && _isTimerRunning.value) {
             delay(100)
             _timeRemaining.value -= 100
@@ -259,9 +300,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun resetTimer() {
         pauseTimer()
         val duration = when (_timerType.value) {
+            TimerType.TURN_10S -> 10000L
             TimerType.TURN_30S -> 30000L
             TimerType.TURN_60S -> 60000L
             TimerType.TURN_90S -> 90000L
+            TimerType.TURN_UNLIMITED -> -1L
             TimerType.CHESS_CLOCK -> 300000L // 5 mins
         }
         _timeRemaining.value = duration

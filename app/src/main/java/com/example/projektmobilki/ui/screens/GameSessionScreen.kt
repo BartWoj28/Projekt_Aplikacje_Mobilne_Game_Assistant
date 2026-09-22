@@ -74,9 +74,11 @@ fun GameSessionScreen(
     val scope = rememberCoroutineScope()
 
     val totalTime = when (timerType) {
+        TimerType.TURN_10S -> 10000L
         TimerType.TURN_30S -> 30000L
         TimerType.TURN_60S -> 60000L
         TimerType.TURN_90S -> 90000L
+        TimerType.TURN_UNLIMITED -> -1L
         TimerType.CHESS_CLOCK -> 300000L
     }
 
@@ -96,6 +98,12 @@ fun GameSessionScreen(
                                 Text(
                                     text = "${formatTime(chessTime1)} | ${formatTime(chessTime2)}",
                                     style = MaterialTheme.typography.titleMedium
+                                )
+                            } else if (timerType == TimerType.TURN_UNLIMITED) {
+                                Text(
+                                    text = "∞",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = MaterialTheme.colorScheme.primary
                                 )
                             } else {
                                 Text(
@@ -138,7 +146,8 @@ fun GameSessionScreen(
                                         dateMillis = System.currentTimeMillis(),
                                         playerResults = playerResults,
                                         winnerName = winnerName,
-                                        durationSeconds = if (durationSeconds > 0) durationSeconds else 5L
+                                        durationSeconds = if (durationSeconds > 0) durationSeconds else 5L,
+                                        endStage = "Round ${gameState.roundCount}, Turn ${gameState.currentPlayerIndex + 1}"
                                     )
                                     GameHistoryRepository.getInstance(context).addGame(entry)
                                     
@@ -155,7 +164,13 @@ fun GameSessionScreen(
                 )
                 // Turn Progress Bar (visual timer) always visible at the top, even when tools are used
                 val barProgress = if (totalTime > 0) timeRemaining.toFloat() / totalTime.toFloat() else 0f
-                if (timerType != TimerType.CHESS_CLOCK) {
+                if (timerType == TimerType.TURN_UNLIMITED) {
+                    LinearProgressIndicator(
+                        progress = { 1f },
+                        modifier = Modifier.fillMaxWidth().height(4.dp),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else if (timerType != TimerType.CHESS_CLOCK) {
                     LinearProgressIndicator(
                         progress = { barProgress },
                         modifier = Modifier.fillMaxWidth().height(4.dp),
@@ -186,7 +201,11 @@ fun GameSessionScreen(
                     
                     Box(modifier = Modifier.weight(1f)) {
                         if (toolTab == 0) {
-                            RandomizerScreen(onBack = { scope.launch { scaffoldState.bottomSheetState.partialExpand() } }, showHeader = false)
+                            RandomizerScreen(
+                                onBack = { scope.launch { scaffoldState.bottomSheetState.partialExpand() } }, 
+                                showHeader = false,
+                                isActive = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                            )
                         } else {
                             DeckScreen(onBack = { scope.launch { scaffoldState.bottomSheetState.partialExpand() } }, showHeader = false)
                         }
@@ -239,9 +258,11 @@ fun GameSessionScreen(
                     ) {
                         Text(
                             text = when(type) {
+                                TimerType.TURN_10S -> "10s"
                                 TimerType.TURN_30S -> "30s"
                                 TimerType.TURN_60S -> "60s"
                                 TimerType.TURN_90S -> "90s"
+                                TimerType.TURN_UNLIMITED -> "∞"
                                 TimerType.CHESS_CLOCK -> "Chess"
                             },
                             style = MaterialTheme.typography.labelSmall
@@ -257,11 +278,13 @@ fun GameSessionScreen(
             PlayerQueueComponent(
                 players = gameState.players,
                 currentPlayerIndex = gameState.currentPlayerIndex,
+                roundCount = gameState.roundCount,
                 onAddPlayer = { viewModel.addPlayer(it) },
                 onRemovePlayer = { viewModel.removePlayer(it) },
                 onClearAllPlayers = { viewModel.clearPlayers() },
                 onShuffle = { viewModel.shufflePlayers() },
                 onNextTurn = { viewModel.nextTurn() },
+                onPreviousTurn = { viewModel.previousTurn() },
                 onUpdateScore = { id, delta -> viewModel.updateScore(id, delta) },
                 modifier = Modifier.weight(1f)
             )

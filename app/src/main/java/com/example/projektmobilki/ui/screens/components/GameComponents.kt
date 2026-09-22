@@ -7,11 +7,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.projektmobilki.models.Player
 
@@ -24,8 +27,9 @@ fun TurnTimerComponent(
     onReset: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isUnlimited = totalTime == -1L
     val progress by animateFloatAsState(
-        targetValue = if (totalTime > 0) timeRemaining.toFloat() / totalTime.toFloat() else 0f,
+        targetValue = if (isUnlimited) 1f else if (totalTime > 0) timeRemaining.toFloat() / totalTime.toFloat() else 0f,
         label = "timerProgress"
     )
 
@@ -34,7 +38,7 @@ fun TurnTimerComponent(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "${timeRemaining / 1000}s",
+            text = if (isUnlimited) "∞" else "${timeRemaining / 1000}s",
             style = MaterialTheme.typography.displayLarge,
             fontWeight = FontWeight.Bold
         )
@@ -46,19 +50,19 @@ fun TurnTimerComponent(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(12.dp),
-            color = if (timeRemaining <= 10000) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            color = if (isUnlimited) MaterialTheme.colorScheme.primary else if (timeRemaining <= 10000) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
         )
         
         Row(
             modifier = Modifier.padding(top = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Button(onClick = onStartPause) {
+            Button(onClick = onStartPause, enabled = !isUnlimited) {
                 Icon(if (isTimerRunning) Icons.Default.Pause else Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(if (isTimerRunning) "Pause" else "Start")
             }
-            OutlinedButton(onClick = onReset) {
+            OutlinedButton(onClick = onReset, enabled = !isUnlimited) {
                 Icon(Icons.Default.Refresh, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Reset")
@@ -167,11 +171,13 @@ private fun formatTime(millis: Long): String {
 fun PlayerQueueComponent(
     players: List<Player>,
     currentPlayerIndex: Int,
+    roundCount: Int,
     onAddPlayer: (String) -> Unit,
     onRemovePlayer: (String) -> Unit,
     onClearAllPlayers: () -> Unit,
     onShuffle: () -> Unit,
     onNextTurn: () -> Unit,
+    onPreviousTurn: () -> Unit,
     onUpdateScore: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -209,11 +215,42 @@ fun PlayerQueueComponent(
             }
         }
 
-        Button(
-            onClick = onNextTurn,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-        ) {
-            Text("Next Player")
+        if (players.isNotEmpty()) {
+            Text(
+                text = "Round $roundCount • Turn ${currentPlayerIndex + 1} of ${players.size}",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                textAlign = TextAlign.Center
+            )
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onPreviousTurn,
+                    enabled = !(roundCount == 1 && currentPlayerIndex == 0),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Spacer(Modifier.width(8.dp))
+                    Text("Back")
+                }
+                
+                Button(
+                    onClick = onNextTurn,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Next Player")
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next")
+                }
+            }
         }
     }
 

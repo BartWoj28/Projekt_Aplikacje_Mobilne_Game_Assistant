@@ -5,7 +5,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Casino
 import androidx.compose.material.icons.rounded.MonetizationOn
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +19,7 @@ fun RandomizerScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     showHeader: Boolean = true,
+    isActive: Boolean = true,
     viewModel: RandomizerViewModel = viewModel()
 ) {
     val diceResults by viewModel.diceResults.collectAsState()
@@ -27,8 +27,12 @@ fun RandomizerScreen(
     val isRolling by viewModel.isRolling.collectAsState()
     val activeTab by viewModel.activeTab.collectAsState()
 
-    DisposableEffect(Unit) {
-        viewModel.startListening()
+    DisposableEffect(isActive) {
+        if (isActive) {
+            viewModel.startListening()
+        } else {
+            viewModel.stopListening()
+        }
         onDispose {
             viewModel.stopListening()
         }
@@ -45,9 +49,6 @@ fun RandomizerScreen(
                         }
                     }
                 )
-            },
-            floatingActionButton = {
-                RandomizerFAB(activeTab, viewModel)
             }
         ) { padding ->
             RandomizerContent(
@@ -69,31 +70,11 @@ fun RandomizerScreen(
                 isRolling = isRolling,
                 isHeads = isHeads
             )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                RandomizerFAB(activeTab, viewModel)
-            }
         }
     }
 }
 
-@Composable
-private fun RandomizerFAB(activeTab: Int, viewModel: RandomizerViewModel) {
-    LargeFloatingActionButton(
-        onClick = { viewModel.triggerAction() },
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Refresh,
-            contentDescription = if (activeTab == 0) "Roll Dice" else "Flip Coin",
-            modifier = Modifier.size(36.dp)
-        )
-    }
-}
+// FAB function removed completely
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,9 +106,17 @@ private fun RandomizerContent(
 
         Box(modifier = Modifier.weight(1f)) {
             if (activeTab == 0) {
-                DiceContent(results = diceResults, isRolling = isRolling)
+                DiceContent(
+                    results = diceResults, 
+                    isRolling = isRolling,
+                    onRoll = { viewModel.triggerAction() }
+                )
             } else {
-                CoinContent(isHeads = isHeads, isRolling = isRolling)
+                CoinContent(
+                    isHeads = isHeads, 
+                    isRolling = isRolling,
+                    onFlip = { viewModel.triggerAction() }
+                )
             }
         }
 
@@ -149,7 +138,5 @@ private fun RandomizerContent(
                 }
             }
         }
-        
-        Spacer(modifier = Modifier.height(80.dp)) // Space for FAB
     }
 }

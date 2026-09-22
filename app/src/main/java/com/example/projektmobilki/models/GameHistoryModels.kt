@@ -14,5 +14,6 @@ data class GameHistoryEntry(
     val dateMillis: Long,
     val playerResults: List<PlayerResult>,
     val winnerName: String,
-    val durationSeconds: Long
+    val durationSeconds: Long,
+    val endStage: String = ""
 )

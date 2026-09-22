@@ -198,10 +198,22 @@ fun HistoryEntryRow(
             }
             
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Duration: ${entry.durationSeconds} seconds",
-                style = MaterialTheme.typography.bodySmall
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Duration: ${entry.durationSeconds} seconds",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                if (entry.endStage.isNotBlank()) {
+                    Text(
+                        text = "Ended at: ${entry.endStage}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(8.dp))
             HorizontalDivider()

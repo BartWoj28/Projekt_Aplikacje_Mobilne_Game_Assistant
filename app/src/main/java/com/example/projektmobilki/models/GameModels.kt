@@ -9,6 +9,7 @@ data class Player(
 data class GameState(
     val players: List<Player> = emptyList(),
     val currentPlayerIndex: Int = 0,
+    val roundCount: Int = 1,
     val isGameStarted: Boolean = false
 ) {
     val currentPlayer: Player?
@@ -16,8 +17,10 @@ data class GameState(
 }
 
 enum class TimerType {
+    TURN_10S,
     TURN_30S,
     TURN_60S,
     TURN_90S,
+    TURN_UNLIMITED,
     CHESS_CLOCK
 }

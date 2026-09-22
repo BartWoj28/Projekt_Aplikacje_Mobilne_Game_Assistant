@@ -24,6 +24,16 @@ class SettingsRepository(context: Context) {
         prefs.edit().putBoolean("vibration_enabled", enabled).apply()
     }
 
+    fun saveLastPlayers(playerNames: List<String>) {
+        prefs.edit().putString("last_players", playerNames.joinToString(",")).apply()
+    }
+
+    fun getLastPlayers(): List<String> {
+        val namesStr = prefs.getString("last_players", "") ?: ""
+        if (namesStr.isBlank()) return emptyList()
+        return namesStr.split(",")
+    }
+
     companion object {
         @Volatile
         private var INSTANCE: SettingsRepository? = null

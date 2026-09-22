@@ -24,6 +24,7 @@ import com.example.projektmobilki.ui.theme.ProjektMobilkiTheme
 import com.example.projektmobilki.ui.viewmodels.GameViewModel
 import com.example.projektmobilki.util.GameHistoryRepository
 import com.example.projektmobilki.util.KeepScreenOn
+import com.example.projektmobilki.util.SettingsRepository
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +35,10 @@ fun GameSessionScreen(
     modifier: Modifier = Modifier,
     viewModel: GameViewModel = viewModel()
 ) {
+    LaunchedEffect(gameId) {
+        viewModel.initializeGame(gameId)
+    }
+
     val gameState by viewModel.gameState.collectAsState()
     val timerType by viewModel.timerType.collectAsState()
     val timeRemaining by viewModel.timeRemaining.collectAsState()
@@ -116,6 +121,9 @@ fun GameSessionScreen(
                                         durationSeconds = if (durationSeconds > 0) durationSeconds else 5L
                                     )
                                     GameHistoryRepository.getInstance(context).addGame(entry)
+                                    
+                                    val playerNames = gameState.players.map { it.name }
+                                    SettingsRepository.getInstance(context).saveLastPlayers(playerNames)
                                 }
                                 onBack()
                             }

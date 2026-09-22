@@ -48,11 +48,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var isVibrationAlertTriggered = false
     private var gameStartTime: Long = 0L
+    private var currentGameId: String? = null
 
     private var timerJob: Job? = null
 
     init {
         resetTimer()
+        loadLastPlayers()
+    }
+
+    fun initializeGame(gameId: String) {
+        if (currentGameId != gameId) {
+            currentGameId = gameId
+            loadLastPlayers()
+            resetTimer()
+        }
+    }
+
+    private fun loadLastPlayers() {
+        val lastPlayers = SettingsRepository.getInstance(getApplication()).getLastPlayers()
+        val players = lastPlayers.map { name ->
+            Player(UUID.randomUUID().toString(), name, 0)
+        }
+        _gameState.value = _gameState.value.copy(players = players, currentPlayerIndex = 0)
+    }
+
+    private fun saveLastPlayers() {
+        val names = _gameState.value.players.map { it.name }
+        SettingsRepository.getInstance(getApplication()).saveLastPlayers(names)
     }
 
     fun addPlayer(name: String) {
@@ -60,6 +83,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _gameState.value = _gameState.value.copy(
             players = _gameState.value.players + newPlayer
         )
+        saveLastPlayers()
         ttsHelper.speak("Added $name")
     }
 
@@ -76,6 +100,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             players = updatedPlayers,
             currentPlayerIndex = newIndex
         )
+        saveLastPlayers()
         playerToRemove?.let { ttsHelper.speak("Removed ${it.name}") }
     }
 
@@ -84,6 +109,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             players = _gameState.value.players.shuffled(),
             currentPlayerIndex = 0
         )
+        saveLastPlayers()
         ttsHelper.speak("Players shuffled")
     }
 

@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
@@ -20,7 +23,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import com.example.projektmobilki.navigation.GameHistory
+import com.example.projektmobilki.navigation.ChessMatch
+import com.example.projektmobilki.ui.screens.ChessScreen
 import com.example.projektmobilki.navigation.GameSession
 import com.example.projektmobilki.navigation.MainMenu
 import com.example.projektmobilki.navigation.NavRoute
@@ -42,7 +48,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ProjektMobilkiTheme {
-                AppContent()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    AppContent()
+                }
             }
         }
     }
@@ -76,6 +87,9 @@ fun AppContent() {
                         backStack.add(GameSession("ActiveSession"))
                     },
                     hasActiveGame = hasActiveGame,
+                    onOpenChess = dropUnlessResumed {
+                        backStack.add(ChessMatch)
+                    },
                     onOpenSettings = dropUnlessResumed {
                         backStack.add(Settings)
                     },
@@ -120,6 +134,14 @@ fun AppContent() {
                 metadata = ListDetailSceneStrategy.detailPane()
             ) {
                 com.example.projektmobilki.ui.screens.GameHistoryScreen(
+                    onBack = { backStack.removeLastOrNull() }
+                )
+            }
+            
+            entry<ChessMatch>(
+                metadata = ListDetailSceneStrategy.detailPane()
+            ) {
+                ChessScreen(
                     onBack = { backStack.removeLastOrNull() }
                 )
             }

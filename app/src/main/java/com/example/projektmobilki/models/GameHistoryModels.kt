@@ -15,5 +15,6 @@ data class GameHistoryEntry(
     val playerResults: List<PlayerResult>,
     val winnerName: String,
     val durationSeconds: Long,
-    val endStage: String = ""
+    val endStage: String = "",
+    val gameType: String = "Card"
 )

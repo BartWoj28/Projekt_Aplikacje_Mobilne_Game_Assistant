@@ -23,3 +23,6 @@ data object VirtualDeck : NavRoute()
 
 @Serializable
 data object GameHistory : NavRoute()
+
+@Serializable
+data object ChessMatch : NavRoute()

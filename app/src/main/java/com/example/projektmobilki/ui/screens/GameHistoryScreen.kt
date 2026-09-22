@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.projektmobilki.models.GameHistoryEntry
 import com.example.projektmobilki.ui.theme.ProjektMobilkiTheme
 import com.example.projektmobilki.util.GameHistoryRepository
@@ -164,7 +166,10 @@ fun HistoryEntryRow(
     val dateStr = dateFormat.format(Date(entry.dateMillis))
 
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (entry.gameType == "Chess") MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -174,13 +179,18 @@ fun HistoryEntryRow(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Winner: ${entry.winnerName}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (entry.gameType == "Chess") {
+                            Text("♟ ", fontSize = 24.sp, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Text(
+                            text = "Winner: ${entry.winnerName}",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = if (entry.gameType == "Chess") MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+                        )
+                    }
                     Text(
                         text = dateStr,
                         style = MaterialTheme.typography.labelSmall,

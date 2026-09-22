@@ -36,16 +36,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _isTimerRunning = MutableStateFlow(false)
     val isTimerRunning: StateFlow<Boolean> = _isTimerRunning.asStateFlow()
 
-    // Chess Clock specific
-    private val _chessTime1 = MutableStateFlow(300000L) // 5 minutes default
-    val chessTime1: StateFlow<Long> = _chessTime1.asStateFlow()
-
-    private val _chessTime2 = MutableStateFlow(300000L)
-    val chessTime2: StateFlow<Long> = _chessTime2.asStateFlow()
-
-    private val _activeChessPlayer = MutableStateFlow(1)
-    val activeChessPlayer: StateFlow<Int> = _activeChessPlayer.asStateFlow()
-
     private val _hasActiveGame = MutableStateFlow(false)
     val hasActiveGame: StateFlow<Boolean> = _hasActiveGame.asStateFlow()
 
@@ -216,11 +206,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         
         _isTimerRunning.value = true
         timerJob = viewModelScope.launch {
-            if (_timerType.value == TimerType.CHESS_CLOCK) {
-                runChessClock()
-            } else {
-                runTurnTimer()
-            }
+            runTurnTimer()
         }
     }
 
@@ -253,45 +239,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun runChessClock() {
-        while (_isTimerRunning.value) {
-            delay(100)
-            if (_activeChessPlayer.value == 1) {
-                _chessTime1.value -= 100
-                if (_chessTime1.value <= 0) {
-                    _isTimerRunning.value = false
-                    try {
-                        if (SettingsRepository.getInstance(getApplication()).isSoundEnabled.value) {
-                            val toneGen = ToneGenerator(AudioManager.STREAM_ALARM, 100)
-                            toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    ttsHelper.speak("Player 1 out of time")
-                }
-            } else {
-                _chessTime2.value -= 100
-                if (_chessTime2.value <= 0) {
-                    _isTimerRunning.value = false
-                    try {
-                        if (SettingsRepository.getInstance(getApplication()).isSoundEnabled.value) {
-                            val toneGen = ToneGenerator(AudioManager.STREAM_ALARM, 100)
-                            toneGen.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 1000)
-                        }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    ttsHelper.speak("Player 2 out of time")
-                }
-            }
-        }
-    }
-
-    fun toggleChessPlayer() {
-        _activeChessPlayer.value = if (_activeChessPlayer.value == 1) 2 else 1
-    }
-
     fun pauseTimer() {
         _isTimerRunning.value = false
         timerJob?.cancel()
@@ -305,11 +252,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             TimerType.TURN_60S -> 60000L
             TimerType.TURN_90S -> 90000L
             TimerType.TURN_UNLIMITED -> -1L
-            TimerType.CHESS_CLOCK -> 300000L // 5 mins
         }
         _timeRemaining.value = duration
-        _chessTime1.value = 300000L
-        _chessTime2.value = 300000L
         isVibrationAlertTriggered = false
     }
 

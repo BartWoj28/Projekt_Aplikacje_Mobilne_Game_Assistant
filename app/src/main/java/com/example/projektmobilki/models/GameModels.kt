@@ -21,6 +21,5 @@ enum class TimerType {
     TURN_30S,
     TURN_60S,
     TURN_90S,
-    TURN_UNLIMITED,
-    CHESS_CLOCK
+    TURN_UNLIMITED
 }

@@ -19,7 +19,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.projektmobilki.models.GameHistoryEntry
 import com.example.projektmobilki.models.PlayerResult
 import com.example.projektmobilki.models.TimerType
-import com.example.projektmobilki.ui.screens.components.ChessClockComponent
 import com.example.projektmobilki.ui.screens.components.PlayerQueueComponent
 import com.example.projektmobilki.ui.screens.components.TurnTimerComponent
 import com.example.projektmobilki.ui.theme.ProjektMobilkiTheme
@@ -65,10 +64,6 @@ fun GameSessionScreen(
     val timerType by viewModel.timerType.collectAsState()
     val timeRemaining by viewModel.timeRemaining.collectAsState()
     val isTimerRunning by viewModel.isTimerRunning.collectAsState()
-    
-    val chessTime1 by viewModel.chessTime1.collectAsState()
-    val chessTime2 by viewModel.chessTime2.collectAsState()
-    val activeChessPlayer by viewModel.activeChessPlayer.collectAsState()
 
     val scaffoldState = rememberBottomSheetScaffoldState()
     val scope = rememberCoroutineScope()
@@ -79,7 +74,6 @@ fun GameSessionScreen(
         TimerType.TURN_60S -> 60000L
         TimerType.TURN_90S -> 90000L
         TimerType.TURN_UNLIMITED -> -1L
-        TimerType.CHESS_CLOCK -> 300000L
     }
 
     // Keep screen on during the game session
@@ -94,12 +88,7 @@ fun GameSessionScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Game Session", modifier = Modifier.weight(1f))
                             // Display compact timer in the TopAppBar so it's always visible during tool usage
-                            if (timerType == TimerType.CHESS_CLOCK) {
-                                Text(
-                                    text = "${formatTime(chessTime1)} | ${formatTime(chessTime2)}",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            } else if (timerType == TimerType.TURN_UNLIMITED) {
+                            if (timerType == TimerType.TURN_UNLIMITED) {
                                 Text(
                                     text = "∞",
                                     style = MaterialTheme.typography.titleLarge,
@@ -170,22 +159,11 @@ fun GameSessionScreen(
                         modifier = Modifier.fillMaxWidth().height(4.dp),
                         color = MaterialTheme.colorScheme.primary
                     )
-                } else if (timerType != TimerType.CHESS_CLOCK) {
+                } else {
                     LinearProgressIndicator(
                         progress = { barProgress },
                         modifier = Modifier.fillMaxWidth().height(4.dp),
                         color = if (timeRemaining <= 10000) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    val chessProgress = if (activeChessPlayer == 1) {
-                        chessTime1.toFloat() / 300000f
-                    } else {
-                        chessTime2.toFloat() / 300000f
-                    }
-                    LinearProgressIndicator(
-                        progress = { chessProgress },
-                        modifier = Modifier.fillMaxWidth().height(4.dp),
-                        color = if ((activeChessPlayer == 1 && chessTime1 <= 60000) || (activeChessPlayer == 2 && chessTime2 <= 60000)) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary
                     )
                 }
             }
@@ -224,26 +202,13 @@ fun GameSessionScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Timer components moved to the top of the main layout column
-            if (timerType == TimerType.CHESS_CLOCK) {
-                ChessClockComponent(
-                    time1 = chessTime1,
-                    time2 = chessTime2,
-                    activePlayer = activeChessPlayer,
-                    isTimerRunning = isTimerRunning,
-                    onTogglePlayer = { viewModel.toggleChessPlayer() },
-                    onStartPause = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.startTimer() },
-                    onReset = { viewModel.resetTimer() },
-                    modifier = Modifier.height(150.dp)
-                )
-            } else {
-                TurnTimerComponent(
-                    timeRemaining = timeRemaining,
-                    totalTime = totalTime,
-                    isTimerRunning = isTimerRunning,
-                    onStartPause = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.startTimer() },
-                    onReset = { viewModel.resetTimer() }
-                )
-            }
+            TurnTimerComponent(
+                timeRemaining = timeRemaining,
+                totalTime = totalTime,
+                isTimerRunning = isTimerRunning,
+                onStartPause = { if (isTimerRunning) viewModel.pauseTimer() else viewModel.startTimer() },
+                onReset = { viewModel.resetTimer() }
+            )
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -263,7 +228,6 @@ fun GameSessionScreen(
                                 TimerType.TURN_60S -> "60s"
                                 TimerType.TURN_90S -> "90s"
                                 TimerType.TURN_UNLIMITED -> "∞"
-                                TimerType.CHESS_CLOCK -> "Chess"
                             },
                             style = MaterialTheme.typography.labelSmall
                         )
@@ -290,13 +254,6 @@ fun GameSessionScreen(
             )
         }
     }
-}
-
-private fun formatTime(millis: Long): String {
-    val totalSeconds = millis / 1000
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
 }
 
 @Preview(showBackground = true)
